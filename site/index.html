@@ -821,12 +821,13 @@
       justify-content: center;
     }
     .download-modal-close:active { box-shadow: var(--shadow-inset-sm); }
-    details.dl-folder { margin-top: 8px; margin-bottom: 4px; }
-    details.dl-folder summary {
+    .dl-folder {
       display: flex;
       align-items: center;
       gap: 8px;
       padding: 10px 14px;
+      margin-top: 8px;
+      margin-bottom: 4px;
       border-radius: 14px;
       background: #E0E5EC;
       box-shadow: var(--shadow-inset-sm);
@@ -835,19 +836,16 @@
       color: #3D4852;
       cursor: pointer;
       user-select: none;
-      list-style: none;
     }
-    details.dl-folder summary::-webkit-details-marker { display: none; }
-    details.dl-folder summary::marker { display: none; content: ''; }
-    details.dl-folder summary:active { box-shadow: var(--shadow-extruded-sm); }
-    details.dl-folder summary i { color: #6C63FF; }
-    details.dl-folder summary .dl-arrow {
+    .dl-folder:active { box-shadow: var(--shadow-extruded-sm); }
+    .dl-folder i { color: #6C63FF; }
+    .dl-folder .dl-arrow {
       margin-left: auto;
       transition: transform 0.25s ease-out;
       color: #6B7280;
     }
-    details.dl-folder[open] summary .dl-arrow { transform: rotate(90deg); }
-    details.dl-folder .dl-contents { padding-left: 8px; }
+    .dl-folder.open .dl-arrow { transform: rotate(90deg); }
+    .dl-hidden { display: none; }
     .dl-file {
       display: flex;
       align-items: center;
@@ -1417,7 +1415,7 @@
         { name: '自定义物资教程.mp4', ext: 'mp4', path: '和平精英/光头强和平模块物资驱动文件大全/自定义物资教程.mp4', indent: 1 },
         { name: 'twt过验证.sh', ext: 'sh', path: '和平精英/光头强和平模块物资驱动文件大全/twt过验证.sh', indent: 1 },
         { name: '光头强和平公益.apk', ext: 'apk', path: '和平精英/光头强和平公益.apk' },
-        { name: '一键导入物资.sh', ext: 'sh', path: '和平精英/一键导入物资.sh' },
+        { name: '一键导入物资(1).sh', ext: 'sh', path: '和平精英/一键导入物资(1).sh' },
       ],
       '其他工具': [
         { name: '官方面具', ext: 'folder' },
@@ -1586,42 +1584,78 @@
 
       title.textContent = game + ' - 下载资源';
 
-      // 用栈构建嵌套的 details 结构
-      var html = '';
-      var stack = []; // 存放当前打开的 details 层级
+      // 把扁平数据转成树形
+      _fid = 0;
+      var tree = buildTree(files);
+      var html = renderTree(tree, 0);
+      list.innerHTML = html;
+      overlay.classList.add('show');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function buildTree(files) {
+      var root = [];
+      var stack = [{children: root, indent: -1}];
 
       for (var i = 0; i < files.length; i++) {
         var f = files[i];
         var indent = f.indent || 0;
 
         if (f.ext === 'folder') {
-          // 关闭比当前层级深的 details
-          while (stack.length > indent) {
-            html += '</div></details>';
+          var node = {name: f.name, ext: 'folder', children: []};
+          // 回退到正确的父级
+          while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
             stack.pop();
           }
-          html += '<details class="dl-folder">';
-          html += '<summary>';
-          html += '<i data-lucide="folder-open" style="width:16px;height:16px;"></i>';
-          html += '<span>' + f.name + '</span>';
-          html += '<i data-lucide="chevron-right" class="dl-arrow" style="width:16px;height:16px;"></i>';
-          html += '</summary>';
-          html += '<div class="dl-contents">';
-          stack.push(f.name);
+          stack[stack.length - 1].children.push(node);
+          stack.push({children: node.children, indent: indent});
         } else {
-          var ml = Math.max(0, (indent - stack.length)) * 20;
-          var icon = extIcons[f.ext] || 'file';
-          html += '<a class="dl-file" href="downloads/' + f.path + '" download="' + f.name.replace(/"/g, '&quot;') + '">';
-          html += '<div class="dl-file-icon"><i data-lucide="' + icon + '" style="width:16px;height:16px;"></i></div>';
-          html += '<div><div class="dl-file-name">' + f.name + '</div><div class="dl-file-ext">.' + f.ext + '</div></div></a>';
+          // 回退到正确的父级
+          while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
+            stack.pop();
+          }
+          stack[stack.length - 1].children.push(f);
         }
       }
-      // 关闭所有剩余 details
-      while (stack.length > 0) { html += '</div></details>'; stack.pop(); }
+      return root;
+    }
 
-      list.innerHTML = html;
-      overlay.classList.add('show');
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+    var _fid = 0;
+    function renderTree(nodes, depth) {
+      var html = '';
+      for (var i = 0; i < nodes.length; i++) {
+        var n = nodes[i];
+        var ml = depth * 20;
+        if (n.ext === 'folder') {
+          _fid++;
+          var gid = 'fg' + _fid;
+          html += '<div class="dl-folder" style="margin-left:' + ml + 'px" onclick="toggleDlFolder(this,\'' + gid + '\')">';
+          html += '<i data-lucide="folder-open" style="width:16px;height:16px;"></i>';
+          html += '<span>' + n.name + '</span>';
+          html += '<i data-lucide="chevron-right" class="dl-arrow" style="width:16px;height:16px;"></i>';
+          html += '</div>';
+          html += '<div class="dl-hidden" id="' + gid + '">';
+          html += renderTree(n.children, depth + 1);
+          html += '</div>';
+        } else {
+          var icon = extIcons[n.ext] || 'file';
+          html += '<a class="dl-file" style="margin-left:' + ml + 'px" href="downloads/' + n.path + '" download="' + n.name.replace(/"/g, '&quot;') + '">';
+          html += '<div class="dl-file-icon"><i data-lucide="' + icon + '" style="width:16px;height:16px;"></i></div>';
+          html += '<div><div class="dl-file-name">' + n.name + '</div><div class="dl-file-ext">.' + n.ext + '</div></div></a>';
+        }
+      }
+      return html;
+    }
+
+    function toggleDlFolder(el, gid) {
+      var group = document.getElementById(gid);
+      if (!group) return;
+      el.classList.toggle('open');
+      if (group.classList.contains('dl-hidden')) {
+        group.classList.remove('dl-hidden');
+      } else {
+        group.classList.add('dl-hidden');
+      }
     }
 
     function closeDownload() {

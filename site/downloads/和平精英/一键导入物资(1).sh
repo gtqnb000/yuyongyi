@@ -7,8 +7,8 @@ cat > "/storage/emulated/0/光头强/自定义物资.txt" << 'EOF'
 
 
 
-BP_CommercialWrapper_LV2_C@侦察兵密钥@255,0,0,255@25;
-BP_CommercialWrapper_LV1_C@突击兵密钥@255,0,0,255@25;
+BP_CommercialWrapper_LV2_C@突击兵密钥@255,0,0,255@25;
+BP_CommercialWrapper_LV1_C@侦查兵密钥@255,0,0,255@25;
 BP_CommercialWrapper_LV3_C@特种兵密钥@255,0,0,255@25;
 BP_CommercialWrapper_LV4_C@指挥官密钥@255,0,0,255@25;
 
