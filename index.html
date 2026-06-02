@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>光头强内核 - 全品类游戏辅助</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'neu-bg': '#E0E5EC',
+            'neu-fg': '#3D4852',
+            'neu-muted': '#6B7280',
+            'neu-accent': '#6C63FF',
+            'neu-accent-light': '#8B84FF',
+            'neu-accent-secondary': '#38B2AC',
+          },
+          fontFamily: {
+            'display': ['"Plus Jakarta Sans"', 'sans-serif'],
+            'body': ['"DM Sans"', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    /* ===== Neumorphism 基础重置 ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    body {
+      background: #E0E5EC;
+      color: #3D4852;
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ===== 阴影变量 ===== */
+    :root {
+      --shadow-extruded: 9px 9px 16px rgb(163,177,198,0.6), -9px -9px 16px rgba(255,255,255,0.5);
+      --shadow-extruded-hover: 12px 12px 20px rgb(163,177,198,0.7), -12px -12px 20px rgba(255,255,255,0.6);
+      --shadow-extruded-sm: 5px 5px 10px rgb(163,177,198,0.6), -5px -5px 10px rgba(255,255,255,0.5);
+      --shadow-inset: inset 6px 6px 10px rgb(163,177,198,0.6), inset -6px -6px 10px rgba(255,255,255,0.5);
+      --shadow-inset-deep: inset 10px 10px 20px rgb(163,177,198,0.7), inset -10px -10px 20px rgba(255,255,255,0.6);
+      --shadow-inset-sm: inset 3px 3px 6px rgb(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.5);
+    }
+
+    /* ===== 导航栏 ===== */
+    .nav-neu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      height: 60px;
+      background: #E0E5EC;
+      box-shadow: 0 4px 12px rgb(163,177,198,0.4);
+      transition: all 0.3s ease-out;
+    }
+    .nav-neu .nav-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+    .nav-neu .nav-brand {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #3D4852;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-neu .nav-brand .logo-img {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      object-fit: cover;
+      object-position: center top;
+      box-shadow: var(--shadow-extruded-sm);
+    }
+    .nav-neu .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-neu .nav-links a {
+      font-size: 14px;
+      font-weight: 500;
+      color: #6B7280;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 12px;
+      transition: all 0.3s ease-out;
+    }
+    .nav-neu .nav-links a:hover {
+      color: #3D4852;
+      box-shadow: var(--shadow-inset-sm);
+    }
+
+    /* 汉堡菜单 */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      background: #E0E5EC;
+      border: none;
+      border-radius: 12px;
+      box-shadow: var(--shadow-extruded-sm);
+      transition: all 0.3s ease-out;
+    }
+    .hamburger:active { box-shadow: var(--shadow-inset-sm); }
+    .hamburger span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: #3D4852;
+      margin: 3px 0;
+      transition: all 0.3s ease-out;
+      border-radius: 1px;
+    }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(3.5px, 3.5px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(3.5px, -3.5px); }
+
+    /* 移动端菜单 */
+    .mobile-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(61, 72, 82, 0.3);
+      z-index: 9998;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease-out;
+    }
+    .mobile-overlay.show { opacity: 1; pointer-events: auto; }
+
+    .mobile-nav {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 100%;
+      max-width: 320px;
+      height: 100vh;
+      background: #E0E5EC;
+      z-index: 9999;
+      transform: translateX(100%);
+      transition: transform 0.4s ease-out;
+      padding: 80px 28px 28px;
+      overflow-y: auto;
+      box-shadow: -12px 0 24px rgb(163,177,198,0.5);
+    }
+    .mobile-nav.open { transform: translateX(0); }
+    .mobile-nav a {
+      display: block;
+      padding: 14px 20px;
+      color: #3D4852;
+      font-size: 16px;
+      font-weight: 500;
+      text-decoration: none;
+      border-radius: 16px;
+      margin-bottom: 8px;
+      box-shadow: var(--shadow-extruded-sm);
+      transition: all 0.3s ease-out;
+    }
+    .mobile-nav a:active { box-shadow: var(--shadow-inset-sm); }
+
+    /* ===== 文字层级 ===== */
+    .headline-hero {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(48px, 10vw, 80px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      color: #3D4852;
+    }
+    .headline-section {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(36px, 6vw, 56px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: #3D4852;
+    }
+    .headline-sub {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: clamp(18px, 2.5vw, 24px);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      color: #3D4852;
+    }
+    .body-regular {
+      font-size: 16px;
+      line-height: 1.7;
+      color: #6B7280;
+    }
+    .body-small {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #6B7280;
+    }
+    .eyebrow {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6C63FF;
+    }
+
+    /* ===== 按钮系统 ===== */
+    .btn-neu {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      border-radius: 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease-out;
+    }
+    .btn-neu:active { transform: translateY(0.5px); }
+
+    /* Primary */
+    .btn-neu-primary {
+      background: #6C63FF;
+      color: #fff;
+      box-shadow: 5px 5px 10px rgb(163,177,198,0.6), -5px -5px 10px rgba(255,255,255,0.5);
+    }
+    .btn-neu-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 8px 8px 16px rgb(163,177,198,0.7), -8px -8px 16px rgba(255,255,255,0.6);
+    }
+    .btn-neu-primary:active {
+      box-shadow: inset 4px 4px 8px rgba(0,0,0,0.2), inset -4px -4px 8px rgba(255,255,255,0.1);
+    }
+
+    /* Secondary */
+    .btn-neu-secondary {
+      background: #E0E5EC;
+      color: #3D4852;
+      box-shadow: var(--shadow-extruded-sm);
+    }
+    .btn-neu-secondary:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-extruded);
+    }
+    .btn-neu-secondary:active { box-shadow: var(--shadow-inset-sm); }
+
+    /* Link */
+    .btn-link {
+      color: #6C63FF;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.25s ease-out;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .btn-link:hover { color: #8B84FF; }
+    .btn-link .arrow {
+      font-size: 18px;
+      transition: transform 0.25s ease-out;
+    }
+    .btn-link:hover .arrow { transform: translateX(3px); }
+
+    /* Copy */
+    .btn-copy-neu {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 18px;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: #3D4852;
+      background: #E0E5EC;
+      border: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-extruded-sm);
+      transition: all 0.3s ease-out;
+    }
+    .btn-copy-neu:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-extruded);
+    }
+    .btn-copy-neu:active { transform: translateY(0.5px); box-shadow: var(--shadow-inset-sm); }
+
+    /* ===== 卡片系统 ===== */
+    .card-neu {
+      background: #E0E5EC;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: var(--shadow-extruded);
+      transition: all 0.3s ease-out;
+      position: relative;
+    }
+    .card-neu:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-extruded-hover);
+    }
+    .card-corner-icon {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-image: url('https://aka.doubaocdn.com/s/GZqi1wWC5R');
+      background-size: cover;
+      background-position: center top;
+      opacity: 0.12;
+      transition: opacity 0.3s ease;
+    }
+    .card-neu:hover .card-corner-icon { opacity: 0.25; }
+
+    .tile-neu {
+      background: #E0E5EC;
+      border-radius: 24px;
+      box-shadow: var(--shadow-extruded);
+      transition: all 0.3s ease-out;
+    }
+    .tile-neu:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-extruded-hover);
+    }
+
+    /* ===== 图标凹槽 ===== */
+    .icon-well {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+      box-shadow: var(--shadow-inset-deep);
+    }
+
+    /* ===== Hero 区域 ===== */
+    .hero-section {
+      min-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 100px 24px 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 装饰性同心圆 */
+    .neu-circle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .neu-circle-extruded {
+      box-shadow: var(--shadow-extruded);
+    }
+    .neu-circle-inset {
+      box-shadow: var(--shadow-inset);
+    }
+
+    /* 浮动动画 */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(3deg); }
+    }
+
+    /* ===== Chip/Tag ===== */
+    .chip-neu {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: #E0E5EC;
+      color: #6B7280;
+      box-shadow: var(--shadow-inset-sm);
+    }
+
+    /* ===== Toast 提示 ===== */
+    .toast {
+      position: fixed;
+      top: 76px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-16px);
+      background: #3D4852;
+      color: #E0E5EC;
+      padding: 12px 24px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 99999;
+      opacity: 0;
+      transition: all 0.35s ease-out;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast-icon { color: #38B2AC; font-size: 16px; }
+
+    /* ===== 渐入动画 ===== */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+    /* ===== 分割线 ===== */
+    .section-divider {
+      width: 100%;
+      height: 2px;
+      background: #E0E5EC;
+      margin: 0 auto;
+      position: relative;
+      box-shadow: inset 1px 1px 2px rgb(163,177,198,0.5), inset -1px -1px 2px rgba(255,255,255,0.5);
+    }
+    .section-divider::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 28px;
+      height: 28px;
+      background-image: url('https://aka.doubaocdn.com/s/GZqi1wWC5R');
+      background-size: cover;
+      background-position: center top;
+      border-radius: 50%;
+      background-color: #E0E5EC;
+      box-shadow: var(--shadow-extruded-sm);
+    }
+
+    /* ===== 页脚 ===== */
+    .footer-neu {
+      background: #E0E5EC;
+      box-shadow: 0 -4px 12px rgb(163,177,198,0.3);
+      padding: 20px 0;
+    }
+    .footer-neu .footer-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+    .footer-neu .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgb(163,177,198,0.3);
+      margin-bottom: 16px;
+    }
+    .footer-neu .footer-links a {
+      font-size: 12px;
+      font-weight: 500;
+      color: #6B7280;
+      text-decoration: none;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      box-shadow: var(--shadow-extruded-sm);
+      transition: all 0.3s ease-out;
+    }
+    .footer-neu .footer-links a:active { box-shadow: var(--shadow-inset-sm); }
+    .footer-neu .footer-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .footer-neu .footer-bottom p { font-size: 12px; color: #6B7280; }
+
+    /* ===== 滚动条 ===== */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #E0E5EC; }
+    ::-webkit-scrollbar-thumb { background: rgb(163,177,198,0.6); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgb(163,177,198,0.8); }
+
+    /* ===== 锚点偏移 ===== */
+    [id] { scroll-margin-top: 72px; }
+
+    /* ===== 音乐播放器 ===== */
+    .music-player {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9998;
+    }
+    .music-toggle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: #E0E5EC;
+      box-shadow: var(--shadow-extruded);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.35s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+    .music-toggle:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-extruded-hover);
+    }
+    .music-toggle:active { transform: translateY(0.5px); box-shadow: var(--shadow-inset); }
+    .music-toggle .disc {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, #d0d5dc, #e8edf4, #d0d5dc, #e8edf4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: var(--shadow-inset-sm);
+    }
+    .music-toggle .disc::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #6C63FF;
+    }
+    .music-toggle .disc.spinning { animation: discSpin 3s linear infinite; }
+    .music-toggle .disc.need-click { animation: discPulse 1.5s ease-in-out infinite; }
+    @keyframes discPulse {
+      0%, 100% { box-shadow: inset 3px 3px 6px rgb(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.5), 0 0 0 0 rgba(108,99,255,0.4); }
+      50% { box-shadow: inset 3px 3px 6px rgb(163,177,198,0.6), inset -3px -3px 6px rgba(255,255,255,0.5), 0 0 0 8px rgba(108,99,255,0); }
+    }
+    @keyframes discSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .music-panel {
+      position: absolute;
+      bottom: 68px;
+      right: 0;
+      width: 300px;
+      background: #E0E5EC;
+      border-radius: 28px;
+      padding: 24px;
+      opacity: 0;
+      transform: translateY(12px) scale(0.95);
+      pointer-events: none;
+      transition: all 0.35s ease-out;
+      box-shadow: var(--shadow-extruded-hover);
+    }
+    .music-panel.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .music-panel .song-info { text-align: center; margin-bottom: 18px; min-height: 48px; }
+    .music-panel .song-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #3D4852;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .music-panel .song-artist {
+      font-size: 12px;
+      color: #6B7280;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .music-progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .music-progress-wrap .time {
+      font-size: 11px;
+      color: #6B7280;
+      min-width: 36px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+    .music-progress {
+      flex: 1;
+      height: 6px;
+      border-radius: 9999px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-inset-sm);
+      background: #E0E5EC;
+    }
+    .music-progress .bar {
+      height: 100%;
+      background: linear-gradient(90deg, #6C63FF, #8B84FF);
+      border-radius: 9999px;
+      width: 0%;
+      transition: width 0.1s linear;
+    }
+    .music-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .music-controls button {
+      width: 40px;
+      height: 40px;
+      background: #E0E5EC;
+      border: none;
+      cursor: pointer;
+      color: #6B7280;
+      font-size: 16px;
+      border-radius: 12px;
+      box-shadow: var(--shadow-extruded-sm);
+      transition: all 0.25s ease-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .music-controls button:hover { color: #3D4852; }
+    .music-controls button:active { box-shadow: var(--shadow-inset-sm); transform: translateY(0.5px); }
+    .music-controls .btn-play {
+      width: 48px;
+      height: 48px;
+      background: #6C63FF;
+      color: #fff;
+      font-size: 18px;
+      border-radius: 50%;
+      box-shadow: 5px 5px 10px rgb(163,177,198,0.6), -5px -5px 10px rgba(255,255,255,0.5);
+    }
+    .music-controls .btn-play:hover { color: #fff; }
+    .music-controls .btn-play:active {
+      box-shadow: inset 3px 3px 6px rgba(0,0,0,0.2), inset -3px -3px 6px rgba(255,255,255,0.1);
+    }
+    .music-extra {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .music-mode {
+      font-size: 14px;
+      color: #6B7280;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: #E0E5EC;
+      border: none;
+      box-shadow: var(--shadow-extruded-sm);
+      transition: all 0.25s ease-out;
+    }
+    .music-mode:active { box-shadow: var(--shadow-inset-sm); }
+    .music-volume {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .music-volume span { font-size: 14px; color: #6B7280; }
+    .music-volume input[type="range"] {
+      width: 70px;
+      height: 6px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #E0E5EC;
+      border-radius: 9999px;
+      outline: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-inset-sm);
+    }
+    .music-volume input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #6C63FF;
+      cursor: pointer;
+      box-shadow: 2px 2px 4px rgb(163,177,198,0.6), -2px -2px 4px rgba(255,255,255,0.5);
+    }
+    .music-volume input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #6C63FF;
+      cursor: pointer;
+      border: none;
+    }
+    .music-playlist {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease-out;
+    }
+    .music-playlist.open {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgb(163,177,198,0.3);
+    }
+    .music-playlist-item {
+      padding: 8px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #6B7280;
+      transition: all 0.2s ease-out;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .music-playlist-item:hover { color: #3D4852; box-shadow: var(--shadow-inset-sm); }
+    .music-playlist-item.active {
+      color: #6C63FF;
+      font-weight: 500;
+      box-shadow: var(--shadow-inset-sm);
+    }
+    @media (max-width: 768px) {
+      .music-player { bottom: 16px; right: 16px; }
+      .music-panel { width: 270px; right: -8px; }
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 768px) {
+      .nav-neu .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .hero-section { padding: 80px 20px 48px; min-height: auto; }
+    }
+
+    /* ===== 下载弹窗 ===== */
+    .download-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(61, 72, 82, 0.4);
+      z-index: 10000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .download-overlay.show { opacity: 1; pointer-events: auto; }
+    .download-modal {
+      background: #E0E5EC;
+      border-radius: 32px;
+      padding: 32px;
+      max-width: 480px;
+      width: 90%;
+      max-height: 75vh;
+      overflow-y: auto;
+      box-shadow: 12px 12px 24px rgb(163,177,198,0.7), -12px -12px 24px rgba(255,255,255,0.6);
+      transform: translateY(16px) scale(0.96);
+      transition: transform 0.3s ease-out;
+    }
+    .download-overlay.show .download-modal { transform: translateY(0) scale(1); }
+    .download-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .download-modal-header h3 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #3D4852;
+    }
+    .download-modal-close {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: #E0E5EC;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      color: #6B7280;
+      box-shadow: var(--shadow-extruded-sm);
+      transition: all 0.2s ease-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .download-modal-close:active { box-shadow: var(--shadow-inset-sm); }
+    .dl-folder {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      margin-top: 12px;
+      margin-bottom: 6px;
+      border-radius: 14px;
+      background: #E0E5EC;
+      box-shadow: var(--shadow-inset-sm);
+      font-size: 13px;
+      font-weight: 700;
+      color: #3D4852;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease-out;
+    }
+    .dl-folder:active { box-shadow: var(--shadow-extruded-sm); }
+    .dl-folder i { color: #6C63FF; }
+    .dl-folder .dl-arrow {
+      margin-left: auto;
+      transition: transform 0.25s ease-out;
+      color: #6B7280;
+    }
+    .dl-folder.open .dl-arrow { transform: rotate(90deg); }
+    .dl-group { overflow: hidden; transition: max-height 0.3s ease-out; }
+    .dl-group.collapsed { max-height: 0 !important; margin: 0; padding: 0; }
+    .dl-file {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+      border-radius: 14px;
+      background: #E0E5EC;
+      box-shadow: var(--shadow-extruded-sm);
+      text-decoration: none;
+      color: #3D4852;
+      transition: all 0.2s ease-out;
+    }
+    .dl-file:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-extruded);
+    }
+    .dl-file:active { box-shadow: var(--shadow-inset-sm); transform: translateY(0.5px); }
+    .dl-file-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: #E0E5EC;
+      box-shadow: var(--shadow-inset-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .dl-file-icon i { color: #6C63FF; }
+    .dl-file-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #3D4852;
+      word-break: break-all;
+      line-height: 1.4;
+    }
+    .dl-file-ext {
+      font-size: 11px;
+      color: #6B7280;
+      margin-top: 2px;
+    }
+    .btn-download-neu {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border-radius: 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      background: #6C63FF;
+      border: none;
+      cursor: pointer;
+      box-shadow: 5px 5px 10px rgb(163,177,198,0.6), -5px -5px 10px rgba(255,255,255,0.5);
+      transition: all 0.3s ease-out;
+      margin-top: 12px;
+    }
+    .btn-download-neu:hover {
+      transform: translateY(-1px);
+      box-shadow: 8px 8px 16px rgb(163,177,198,0.7), -8px -8px 16px rgba(255,255,255,0.6);
+    }
+    .btn-download-neu:active {
+      transform: translateY(0.5px);
+      box-shadow: inset 4px 4px 8px rgba(0,0,0,0.2), inset -4px -4px 8px rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 主内容 -->
+  <div class="content-layer">
+
+  <!-- Toast 提示 -->
+  <div class="toast" id="toast">
+    <span class="toast-icon">✓</span>
+    <span>已复制到剪贴板</span>
+  </div>
+
+  <!-- 下载弹窗 -->
+  <div class="download-overlay" id="downloadOverlay">
+    <div class="download-modal" id="downloadModal">
+      <div class="download-modal-header">
+        <h3 id="downloadTitle">下载资源</h3>
+        <button class="download-modal-close" onclick="closeDownload()">✕</button>
+      </div>
+      <div id="downloadFileList"></div>
+    </div>
+  </div>
+
+  <!-- 移动端遮罩 -->
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+
+  <!-- 移动端侧边导航 -->
+  <nav class="mobile-nav" id="mobileNav">
+    <a href="#home" onclick="closeMobileNav()">首页</a>
+    <a href="#games" onclick="closeMobileNav()">全游适配</a>
+    <a href="#qqgroup" onclick="closeMobileNav()">QQ群</a>
+    <a href="#shop" onclick="closeMobileNav()">卡网</a>
+    <a href="#more" onclick="closeMobileNav()">更多资源</a>
+  </nav>
+
+  <!-- 导航栏 -->
+  <header class="nav-neu" id="nav">
+    <div class="nav-content">
+      <a href="#home" class="nav-brand">
+        <img src="https://aka.doubaocdn.com/s/GZqi1wWC5R" alt="光头强内核" class="logo-img" onerror="this.style.display='none';">
+        光头强内核
+      </a>
+      <nav class="nav-links">
+        <a href="#home">首页</a>
+        <a href="#games">全游适配</a>
+        <a href="#qqgroup">QQ群</a>
+        <a href="#shop">卡网</a>
+        <a href="#more">更多资源</a>
+      </nav>
+      <button class="hamburger" id="hamburger" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== 首屏 ==================== -->
+  <section id="home" class="hero-section">
+    <!-- 装饰性同心圆 -->
+    <div class="neu-circle neu-circle-extruded" style="width: 300px; height: 300px; top: 15%; left: 10%; animation: float 6s ease-in-out infinite;"></div>
+    <div class="neu-circle neu-circle-inset" style="width: 200px; height: 200px; top: 25%; left: 18%; animation: float 6s ease-in-out infinite 0.5s;"></div>
+    <div class="neu-circle neu-circle-extruded" style="width: 250px; height: 250px; bottom: 20%; right: 8%; animation: floatSlow 8s ease-in-out infinite;"></div>
+    <div class="neu-circle neu-circle-inset" style="width: 160px; height: 160px; bottom: 28%; right: 14%; animation: floatSlow 8s ease-in-out infinite 1s;"></div>
+
+    <div class="fade-in" style="max-width: 800px; position: relative; z-index: 2;">
+      <p class="eyebrow mb-5">⛏️ 光头强内核 · 全品类游戏辅助</p>
+      <h1 class="headline-hero mb-6">光头强内核</h1>
+      <p class="body-regular mb-10 max-w-xl mx-auto" style="font-size: 18px;">
+        和平精英 · 王者荣耀 · 无畏契约 · 香肠派对
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <a href="#games" class="btn-neu btn-neu-primary">
+          ⛏️ 查看适配游戏
+          <span style="font-size: 18px;">›</span>
+        </a>
+        <a href="#shop" class="btn-neu btn-neu-secondary">
+          🪓 进入卡网
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 全游适配 ==================== -->
+  <section id="games" style="padding: 64px 24px; position: relative; overflow: hidden;">
+    <div class="neu-circle neu-circle-extruded" style="width: 400px; height: 400px; top: 50%; right: -150px; transform: translateY(-50%); opacity: 0.4;"></div>
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-10 fade-in">
+        <p class="eyebrow mb-4">全游适配</p>
+        <h2 class="headline-section">全品类<br>全面覆盖</h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- 和平精英 -->
+        <div class="card-neu fade-in">
+          <div class="card-corner-icon"></div>
+          <div style="padding: 32px 28px;">
+            <div class="icon-well" style="margin-bottom: 16px;">
+              <img src="images/heping.jpg" alt="和平精英" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+            </div>
+            <h3 class="headline-sub mb-3">和平精英</h3>
+            <p class="body-small mb-5">断点子追 · 陀螺仪自瞄 · 独家驱动 · 高端解密</p>
+            <div class="flex flex-wrap gap-2">
+              <span class="chip-neu">独家驱动</span>
+              <span class="chip-neu">帧率稳定</span>
+              <span class="chip-neu">算法解密</span>
+            </div>
+            <button class="btn-download-neu" onclick="openDownload('和平精英')"><i data-lucide="download" style="width:16px;height:16px;"></i> 下载资源</button>
+          </div>
+        </div>
+
+        <!-- 王者荣耀 -->
+        <div class="card-neu fade-in">
+          <div class="card-corner-icon"></div>
+          <div style="padding: 32px 28px;">
+            <div class="icon-well" style="margin-bottom: 16px;">
+              <img src="images/wangzhe.jpg" alt="王者荣耀" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+            </div>
+            <h3 class="headline-sub mb-3">王者荣耀</h3>
+            <p class="body-small mb-5">视野优化 · 技能提示 · 对线辅助 · 全段位适配</p>
+            <div class="flex flex-wrap gap-2">
+              <span class="chip-neu">稳定解密</span>
+              <span class="chip-neu">技能提示</span>
+              <span class="chip-neu">野区显示</span>
+            </div>
+            <button class="btn-download-neu" onclick="openDownload('王者荣耀')"><i data-lucide="download" style="width:16px;height:16px;"></i> 下载资源</button>
+          </div>
+        </div>
+
+        <!-- 无畏契约 -->
+        <div class="card-neu fade-in">
+          <div class="card-corner-icon"></div>
+          <div style="padding: 32px 28px;">
+            <div class="icon-well" style="margin-bottom: 16px;">
+              <img src="images/wuwei.jpg" alt="无畏契约" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+            </div>
+            <h3 class="headline-sub mb-3">无畏契约</h3>
+            <p class="body-small mb-5">适配多驱动 · 占用率低 · 高强度保护</p>
+            <div class="flex flex-wrap gap-2">
+              <span class="chip-neu">稳定解密</span>
+              <span class="chip-neu">低功耗</span>
+              <span class="chip-neu">高稳定</span>
+            </div>
+            <button class="btn-download-neu" onclick="openDownload('无畏契约')"><i data-lucide="download" style="width:16px;height:16px;"></i> 下载资源</button>
+          </div>
+        </div>
+
+        <!-- 香肠派对 -->
+        <div class="card-neu fade-in">
+          <div class="card-corner-icon"></div>
+          <div style="padding: 32px 28px;">
+            <div class="icon-well" style="margin-bottom: 16px;">
+              <img src="images/xiangchang.jpg" alt="香肠派对" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+            </div>
+            <h3 class="headline-sub mb-3">香肠派对</h3>
+            <p class="body-small mb-5">轻量化辅助 · 流畅优化 · 低占用不卡顿</p>
+            <div class="flex flex-wrap gap-2">
+              <span class="chip-neu">轻量化</span>
+              <span class="chip-neu">流畅优化</span>
+              <span class="chip-neu">低占用</span>
+            </div>
+            <button class="btn-download-neu" onclick="openDownload('香肠派对')"><i data-lucide="download" style="width:16px;height:16px;"></i> 下载资源</button>
+          </div>
+        </div>
+
+        <!-- PUBGM -->
+        <div class="card-neu fade-in">
+          <div class="card-corner-icon"></div>
+          <div style="padding: 32px 28px;">
+            <div class="icon-well" style="margin-bottom: 16px;">
+              <img src="images/pubgm.jpg" alt="PUBGM" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+            </div>
+            <h3 class="headline-sub mb-3">PUBGM</h3>
+            <p class="body-small mb-5">国际服适配 · 透视自瞄 · 压枪优化 · 低延迟</p>
+            <div class="flex flex-wrap gap-2">
+              <span class="chip-neu">国际服适配</span>
+              <span class="chip-neu">压枪优化</span>
+              <span class="chip-neu">低延迟</span>
+            </div>
+            <button class="btn-download-neu" onclick="openDownload('PUBGM')"><i data-lucide="download" style="width:16px;height:16px;"></i> 下载资源</button>
+          </div>
+        </div>
+
+        <!-- 其他工具 -->
+        <div class="card-neu fade-in">
+          <div class="card-corner-icon"></div>
+          <div style="padding: 32px 28px;">
+            <div class="icon-well" style="margin-bottom: 16px;">
+              <img src="images/qitagongju.jpg" alt="其他工具" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">
+            </div>
+            <h3 class="headline-sub mb-3">其他工具</h3>
+            <p class="body-small mb-5">系统优化 · 性能增强 · 一键配置 · 多功能集成</p>
+            <div class="flex flex-wrap gap-2">
+              <span class="chip-neu">一键优化</span>
+              <span class="chip-neu">全兼容</span>
+              <span class="chip-neu">多功能</span>
+            </div>
+            <button class="btn-download-neu" onclick="openDownload('其他工具')"><i data-lucide="download" style="width:16px;height:16px;"></i> 下载资源</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== QQ群 ==================== -->
+  <section id="qqgroup" style="padding: 64px 24px; position: relative; overflow: hidden;">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-10 fade-in">
+        <p class="eyebrow mb-4">官方社群</p>
+        <h2 class="headline-section">加入QQ群</h2>
+      </div>
+
+      <div class="tile-neu fade-in" style="padding: 0;">
+        <div style="padding: 32px;">
+          <div class="flex items-start gap-4">
+            <div class="icon-well">🐧</div>
+            <div class="flex-1 min-w-0">
+              <h3 class="headline-sub mb-1" style="font-size: 20px;">光头强官方聊天①⑤群</h3>
+              <p class="body-small mb-4">实时发布更新通知，提供问题答疑与售后服务</p>
+              <div class="flex flex-wrap items-center gap-3">
+                <span style="font-size: 14px; color: #3D4852; font-family: 'DM Sans', monospace; background: #E0E5EC; padding: 8px 16px; border-radius: 12px; box-shadow: var(--shadow-inset-sm);">123456789</span>
+                <button class="btn-copy-neu" onclick="copyText('123456789')">复制群号</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 卡网 ==================== -->
+  <section id="shop" style="padding: 64px 24px; position: relative; overflow: hidden;">
+    <div class="max-w-3xl mx-auto">
+      <div class="text-center mb-10 fade-in">
+        <p class="eyebrow mb-4">官方店铺</p>
+        <h2 class="headline-section">卡网入口</h2>
+      </div>
+
+      <div class="tile-neu fade-in" style="padding: 0; box-shadow: 12px 12px 20px rgb(163,177,198,0.7), -12px -12px 20px rgba(255,255,255,0.6);">
+        <div style="padding: 32px;">
+          <div class="flex items-start gap-4">
+            <div class="icon-well">🏪</div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-3 mb-1">
+                <h3 class="headline-sub" style="font-size: 20px;">光头强官方小店</h3>
+                <span style="font-size: 10px; font-weight: 700; padding: 4px 12px; border-radius: 9999px; background: #6C63FF; color: #fff; letter-spacing: 0.05em;">推荐</span>
+              </div>
+              <p class="body-small mb-5">光头强官方小店、多类型和平账号、质量tg账号</p>
+              <a href="https://luoye.chyidc.cn/shop/gtqnb" target="_blank" rel="noopener" class="btn-neu btn-neu-primary" style="display: inline-flex;">
+                ⛏️ 进入店铺
+                <span style="font-size: 18px;">›</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 更多资源 ==================== -->
+  <section id="more" style="padding: 64px 24px; position: relative; overflow: hidden;">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-10 fade-in">
+        <p class="eyebrow mb-4">更多资源</p>
+        <h2 class="headline-section">关注官方<br>获取动态</h2>
+      </div>
+
+      <!-- TG频道 -->
+      <div class="tile-neu fade-in" style="padding: 0; margin-bottom: 16px;">
+        <div style="padding: 28px 32px;">
+          <div class="flex items-start gap-4 mb-6">
+            <div class="icon-well">
+              <span style="font-weight:900;font-size:22px;color:#6C63FF;">✈</span>
+            </div>
+            <div>
+              <h3 class="headline-sub mb-1" style="font-size: 20px;">官方TG频道</h3>
+              <p class="body-small">关注Telegram频道获取最新资源与更新通知</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <a href="https://t.me/gtqnb000" target="_blank" rel="noopener" class="tile-neu" style="padding: 20px; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="width: 56px; height: 56px; border-radius: 50%; overflow: hidden; box-shadow: var(--shadow-inset);">
+                <img src="images/tg-guanfang.jpg" alt="光头强官方频道" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';">
+              </div>
+              <div style="text-align: center;">
+                <p style="font-size: 14px; font-weight: 600; color: #3D4852; margin-bottom: 4px;">光头强官方频道</p>
+                <p style="font-size: 12px; color: #6C63FF;">点击访问 ›</p>
+              </div>
+            </a>
+            <a href="https://t.me/gtqfko" target="_blank" rel="noopener" class="tile-neu" style="padding: 20px; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="width: 56px; height: 56px; border-radius: 50%; overflow: hidden; box-shadow: var(--shadow-inset);">
+                <img src="images/tg-fankui.jpg" alt="光头强反馈频道" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';">
+              </div>
+              <div style="text-align: center;">
+                <p style="font-size: 14px; font-weight: 600; color: #3D4852; margin-bottom: 4px;">光头强反馈频道</p>
+                <p style="font-size: 12px; color: #6C63FF;">点击访问 ›</p>
+              </div>
+            </a>
+            <a href="https://t.me/gtqcm000" target="_blank" rel="noopener" class="tile-neu" style="padding: 20px; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="width: 56px; height: 56px; border-radius: 50%; overflow: hidden; box-shadow: var(--shadow-inset);">
+                <img src="images/tg-chuanmei.jpg" alt="光头强传媒频道" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';">
+              </div>
+              <div style="text-align: center;">
+                <p style="font-size: 14px; font-weight: 600; color: #3D4852; margin-bottom: 4px;">光头强传媒频道</p>
+                <p style="font-size: 12px; color: #6C63FF;">点击访问 ›</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 快手账号 -->
+      <div class="tile-neu fade-in" style="padding: 0; margin-bottom: 16px;">
+        <div style="padding: 28px 32px;">
+          <div class="flex items-start gap-4 mb-6">
+            <div class="icon-well"><span style="font-weight:900;font-size:22px;color:#6C63FF;">K</span></div>
+            <div>
+              <h3 class="headline-sub mb-1" style="font-size: 20px;">快手账号专区</h3>
+              <p class="body-small">关注快手账号获取最新动态与教程</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <a href="https://v.kuaishou.com/J14z3uqz" target="_blank" rel="noopener" class="tile-neu" style="padding: 20px; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="width: 110px; height: 110px; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-inset-deep);">
+                <img src="https://aka.doubaocdn.com/s/wi0h1wWCZJ" alt="强哥官方账号二维码" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';">
+              </div>
+              <div style="text-align: center;">
+                <p style="font-size: 14px; font-weight: 600; color: #3D4852; margin-bottom: 4px;">强哥官方账号</p>
+                <p style="font-size: 12px; color: #6C63FF;">扫码关注 ›</p>
+              </div>
+            </a>
+            <a href="https://v.kuaishou.com/JpR2I041" target="_blank" rel="noopener" class="tile-neu" style="padding: 20px; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="width: 110px; height: 110px; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-inset-deep);">
+                <img src="https://aka.doubaocdn.com/s/kwpJ1wWCZJ" alt="小新官方账号二维码" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';">
+              </div>
+              <div style="text-align: center;">
+                <p style="font-size: 14px; font-weight: 600; color: #3D4852; margin-bottom: 4px;">小新官方账号</p>
+                <p style="font-size: 12px; color: #6C63FF;">扫码关注 ›</p>
+              </div>
+            </a>
+            <a href="https://v.kuaishou.com/KEPNKSF9" target="_blank" rel="noopener" class="tile-neu" style="padding: 20px; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+              <div style="width: 110px; height: 110px; border-radius: 20px; overflow: hidden; box-shadow: var(--shadow-inset-deep);">
+                <img src="https://aka.doubaocdn.com/s/ktRf1wWCZJ" alt="于勇义官方账号二维码" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';">
+              </div>
+              <div style="text-align: center;">
+                <p style="font-size: 14px; font-weight: 600; color: #3D4852; margin-bottom: 4px;">于勇义官方账号</p>
+                <p style="font-size: 12px; color: #6C63FF;">扫码关注 ›</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 网盘资源 -->
+      <div class="tile-neu fade-in" style="padding: 0;">
+        <div style="padding: 28px 32px;">
+          <div class="flex items-start gap-4">
+            <div class="icon-well">📁</div>
+            <div class="flex-1 min-w-0">
+              <h3 class="headline-sub mb-1" style="font-size: 20px;">网盘资源</h3>
+              <p class="body-small mb-4">整合全游戏最新内核、适配驱动</p>
+              <div class="flex flex-wrap items-center gap-3">
+                <a href="https://drive.uc.cn/s/d5ffdedf02f54?public=1" target="_blank" rel="noopener" class="btn-link">
+                  访问网盘 <span class="arrow">›</span>
+                </a>
+                <button class="btn-copy-neu" onclick="copyText('https://drive.uc.cn/s/d5ffdedf02f54?public=1')">复制链接</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 页脚 ==================== -->
+  <footer class="footer-neu">
+    <div class="footer-content">
+      <div class="footer-links">
+        <a href="#home">首页</a>
+        <a href="#games">全游适配</a>
+        <a href="#qqgroup">QQ群</a>
+        <a href="#shop">卡网</a>
+        <a href="#more">更多资源</a>
+      </div>
+      <div class="footer-bottom">
+        <p>本项目仅作技术学习与娱乐测试，请勿违规使用，相关后果由使用者自行承担</p>
+        <p>Copyright © 2024-2026 光头强内核 ⛏️. 最后更新：2026年5月</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== 音乐播放器 ==================== -->
+  <div class="music-player" id="musicPlayer">
+    <div class="music-panel" id="musicPanel">
+      <div class="song-info">
+        <div class="song-title" id="songTitle">暂无歌曲</div>
+        <div class="song-artist" id="songArtist">等待加载...</div>
+      </div>
+      <div class="music-progress-wrap">
+        <span class="time" id="currentTime">0:00</span>
+        <div class="music-progress" id="progressBar">
+          <div class="bar" id="progressFill"></div>
+        </div>
+        <span class="time" id="totalTime">0:00</span>
+      </div>
+      <div class="music-controls">
+        <button id="btnPrev" title="上一首">⏮</button>
+        <button class="btn-play" id="btnPlay" title="播放/暂停">▶</button>
+        <button id="btnNext" title="下一首">⏭</button>
+      </div>
+      <div class="music-extra">
+        <button class="music-mode" id="btnMode" title="播放模式">🔁</button>
+        <button class="music-mode" id="btnList" title="播放列表">📋</button>
+        <div class="music-volume">
+          <span>🔊</span>
+          <input type="range" id="volumeSlider" min="0" max="100" value="80">
+        </div>
+      </div>
+      <div class="music-playlist" id="playlistBox"></div>
+    </div>
+    <div class="music-toggle" id="musicToggle" title="音乐播放器">
+      <div class="disc" id="disc">
+        <span class="music-icon">♫</span>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /content-layer -->
+
+  <!-- ==================== 脚本 ==================== -->
+  <script>
+    // 移动端导航
+    const hamburger = document.getElementById('hamburger');
+    const mobileNav = document.getElementById('mobileNav');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+
+    function openMobileNav() {
+      hamburger.classList.add('active');
+      mobileNav.classList.add('open');
+      mobileOverlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMobileNav() {
+      hamburger.classList.remove('active');
+      mobileNav.classList.remove('open');
+      mobileOverlay.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+
+    hamburger.addEventListener('click', () => {
+      mobileNav.classList.contains('open') ? closeMobileNav() : openMobileNav();
+    });
+
+    mobileOverlay.addEventListener('click', closeMobileNav);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMobileNav(); });
+
+    // 复制功能
+    function copyText(text) {
+      navigator.clipboard.writeText(text).then(showToast).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.cssText = 'position:fixed;opacity:0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast();
+      });
+    }
+
+    function showToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // 初始化 Lucide 图标
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    // 渐入动画
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -30px 0px' });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // ===== 下载功能 =====
+    // 直接用完整路径，避免编码问题
+    const downloadFiles = {
+      '和平精英': [
+        { name: '光头强和平模块物资驱动文件大全', ext: 'folder' },
+        { name: '自定义物资.txt', ext: 'txt', path: '和平精英/光头强和平模块物资驱动文件大全/自定义物资.txt', indent: 1 },
+        { name: '自定义物资教程.mp4', ext: 'mp4', path: '和平精英/光头强和平模块物资驱动文件大全/自定义物资教程.mp4', indent: 1 },
+        { name: 'twt过验证.sh', ext: 'sh', path: '和平精英/光头强和平模块物资驱动文件大全/twt过验证.sh', indent: 1 },
+        { name: '光头强和平公益.apk', ext: 'apk', path: '和平精英/光头强和平公益.apk' },
+        { name: '一键导入物资.sh', ext: 'sh', path: '和平精英/一键导入物资.sh' },
+      ],
+      '其他工具': [
+        { name: '官方面具', ext: 'folder' },
+        { name: 'KernelSU内测版.apk', ext: 'apk', path: '其他工具/官方面具/KernelSU内测版.apk', indent: 1 },
+        { name: '陀螺仪模块', ext: 'folder' },
+        { name: '陀螺仪模块(必须刷这个).zip', ext: 'zip', path: '其他工具/陀螺仪模块/陀螺仪模块(必须刷这个).zip', indent: 1 },
+        { name: 'Zygisk-Next《陀螺仪备用》.zip', ext: 'zip', path: '其他工具/陀螺仪模块/Zygisk-Next《陀螺仪备用》.zip', indent: 1 },
+        { name: 'zygisknext《陀螺仪》.zip', ext: 'zip', path: '其他工具/陀螺仪模块/zygisknext《陀螺仪》.zip', indent: 1 },
+        { name: '隐藏,调度模块', ext: 'folder' },
+        { name: '月虹一键隐藏v5.4.zip', ext: 'zip', path: '其他工具/隐藏,调度模块/月虹一键隐藏v5.4.zip', indent: 1 },
+        { name: 'tenc清理缓存+Kill进程+设备标记(阿灵).zip', ext: 'zip', path: '其他工具/隐藏,调度模块/tenc清理缓存+Kill进程+设备标记(阿灵).zip', indent: 1 },
+        { name: '光头强优化掉帧v(6).sh', ext: 'sh', path: '其他工具/光头强优化掉帧v(6).sh' },
+      ],
+      '王者荣耀': [
+        { name: '光头强王者公益内核(无解密）', ext: 'folder' },
+        { name: '驱动合集', ext: 'folder', indent: 1 },
+        { name: 'ditPro_kpm驱动', ext: 'folder', indent: 2 },
+        { name: 'ditPro_kpm(117).kpm', ext: 'kpm', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/ditPro_kpm驱动/ditPro_kpm(117).kpm', indent: 3 },
+        { name: 'kma_kpm驱动', ext: 'folder', indent: 2 },
+        { name: 'kma_v6.12.708.kpm', ext: 'kpm', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/kma_kpm驱动/kma_v6.12.708.kpm', indent: 3 },
+        { name: 'paradise522驱动', ext: 'folder', indent: 2 },
+        { name: '5.10-Pixel.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/paradise522驱动/5.10-Pixel.ko.sh', indent: 3 },
+        { name: '5.10.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/paradise522驱动/5.10.ko.sh', indent: 3 },
+        { name: '5.15-Pixel.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/paradise522驱动/5.15-Pixel.ko.sh', indent: 3 },
+        { name: '5.15.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/paradise522驱动/5.15.ko.sh', indent: 3 },
+        { name: '6.1.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/paradise522驱动/6.1.ko.sh', indent: 3 },
+        { name: '6.12.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/paradise522驱动/6.12.ko.sh', indent: 3 },
+        { name: '6.6.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/paradise522驱动/6.6.ko.sh', indent: 3 },
+        { name: 'rt dev过检测', ext: 'folder', indent: 2 },
+        { name: '4.14.117.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.14.117.sh', indent: 3 },
+        { name: '4.14.141.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.14.141.sh', indent: 3 },
+        { name: '4.14.180.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.14.180.sh', indent: 3 },
+        { name: '4.14.186.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.14.186.sh', indent: 3 },
+        { name: '4.14.186b.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.14.186b.sh', indent: 3 },
+        { name: '4.14.186c.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.14.186c.sh', indent: 3 },
+        { name: '4.14.190.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.14.190.sh', indent: 3 },
+        { name: '4.19.113.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.19.113.sh', indent: 3 },
+        { name: '4.19.157.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.19.157.sh', indent: 3 },
+        { name: '4.19.157b.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.19.157b.sh', indent: 3 },
+        { name: '4.19.157c.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.19.157c.sh', indent: 3 },
+        { name: '4.19.191.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.19.191.sh', indent: 3 },
+        { name: '4.19.191b.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.19.191b.sh', indent: 3 },
+        { name: '4.19.191c.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.19.191c.sh', indent: 3 },
+        { name: '4.19.81.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.19.81.sh', indent: 3 },
+        { name: '4.9.186.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/4.9.186.sh', indent: 3 },
+        { name: '5.10.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/5.10.sh', indent: 3 },
+        { name: '5.15.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/5.15.sh', indent: 3 },
+        { name: '5.4.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/5.4.sh', indent: 3 },
+        { name: '5.4b.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/5.4b.sh', indent: 3 },
+        { name: '5.4c.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/5.4c.sh', indent: 3 },
+        { name: '6.1.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/6.1.sh', indent: 3 },
+        { name: '6.12.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/6.12.sh', indent: 3 },
+        { name: '6.6.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/6.6.sh', indent: 3 },
+        { name: '执行我过频道验证.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt dev过检测/执行我过频道验证.sh', indent: 3 },
+        { name: 'rt hook过检测', ext: 'folder', indent: 2 },
+        { name: '4.14.117.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.14.117.sh', indent: 3 },
+        { name: '4.14.141.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.14.141.sh', indent: 3 },
+        { name: '4.14.180.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.14.180.sh', indent: 3 },
+        { name: '4.14.186.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.14.186.sh', indent: 3 },
+        { name: '4.14.186b.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.14.186b.sh', indent: 3 },
+        { name: '4.14.186c.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.14.186c.sh', indent: 3 },
+        { name: '4.19.113.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.19.113.sh', indent: 3 },
+        { name: '4.19.157.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.19.157.sh', indent: 3 },
+        { name: '4.19.157b.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.19.157b.sh', indent: 3 },
+        { name: '4.19.157c.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.19.157c.sh', indent: 3 },
+        { name: '4.19.191.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.19.191.sh', indent: 3 },
+        { name: '4.19.191b.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.19.191b.sh', indent: 3 },
+        { name: '4.19.191c.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.19.191c.sh', indent: 3 },
+        { name: '4.19.81.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/4.19.81.sh', indent: 3 },
+        { name: '5.10.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/5.10.sh', indent: 3 },
+        { name: '5.15.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/5.15.sh', indent: 3 },
+        { name: '5.4.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/5.4.sh', indent: 3 },
+        { name: '5.4b.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/5.4b.sh', indent: 3 },
+        { name: '5.4c.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/5.4c.sh', indent: 3 },
+        { name: '6.1.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/6.1.sh', indent: 3 },
+        { name: '6.12.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/6.12.sh', indent: 3 },
+        { name: '6.6.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/rt hook过检测/6.6.sh', indent: 3 },
+        { name: '过linyu驱动频道验证.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/过linyu驱动频道验证.sh', indent: 2 },
+        { name: '过rt驱动频道验证.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/过rt驱动频道验证.sh', indent: 2 },
+        { name: '橘子引擎驱动下载V1.0.3.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/橘子引擎驱动下载V1.0.3.sh', indent: 2 },
+        { name: 'dits_ko(1.2.1).sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/dits_ko(1.2.1).sh', indent: 2 },
+        { name: 'linyu驱动5.1.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/linyu驱动5.1.sh', indent: 2 },
+        { name: 'LQ驱动2.0.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/LQ驱动2.0.sh', indent: 2 },
+        { name: 'twt频道过验证.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/twt频道过验证.sh', indent: 2 },
+        { name: 'TwTLoaderv1.47.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/驱动合集/TwTLoaderv1.47.sh', indent: 2 },
+        { name: '光头强王者公益内核2.4.sh', ext: 'sh', path: '王者荣耀/光头强王者公益内核(无解密）/光头强王者公益内核2.4.sh', indent: 1 },
+        { name: '光头强王者解密版本公益', ext: 'folder' },
+        { name: 'RT DEV', ext: 'folder', indent: 1 },
+        { name: '4.14.117.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.14.117.sh', indent: 2 },
+        { name: '4.14.141.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.14.141.sh', indent: 2 },
+        { name: '4.14.180.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.14.180.sh', indent: 2 },
+        { name: '4.14.186.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.14.186.sh', indent: 2 },
+        { name: '4.14.186b.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.14.186b.sh', indent: 2 },
+        { name: '4.14.186c.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.14.186c.sh', indent: 2 },
+        { name: '4.14.190.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.14.190.sh', indent: 2 },
+        { name: '4.19.113.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.19.113.sh', indent: 2 },
+        { name: '4.19.157.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.19.157.sh', indent: 2 },
+        { name: '4.19.157b.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.19.157b.sh', indent: 2 },
+        { name: '4.19.157c.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.19.157c.sh', indent: 2 },
+        { name: '4.19.191.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.19.191.sh', indent: 2 },
+        { name: '4.19.191b.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.19.191b.sh', indent: 2 },
+        { name: '4.19.191c.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.19.191c.sh', indent: 2 },
+        { name: '4.19.81.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.19.81.sh', indent: 2 },
+        { name: '4.9.186.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/4.9.186.sh', indent: 2 },
+        { name: '5.10.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/5.10.sh', indent: 2 },
+        { name: '5.15.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/5.15.sh', indent: 2 },
+        { name: '5.4.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/5.4.sh', indent: 2 },
+        { name: '5.4b.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/5.4b.sh', indent: 2 },
+        { name: '5.4c.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/5.4c.sh', indent: 2 },
+        { name: '6.1.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/6.1.sh', indent: 2 },
+        { name: '6.12.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/6.12.sh', indent: 2 },
+        { name: '6.6.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/6.6.sh', indent: 2 },
+        { name: '执行我过频道验证.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RT DEV/执行我过频道验证.sh', indent: 2 },
+        { name: 'RTHOOK', ext: 'folder', indent: 1 },
+        { name: '4.14.117.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.14.117.ko.sh', indent: 2 },
+        { name: '4.14.141.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.14.141.ko.sh', indent: 2 },
+        { name: '4.14.180.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.14.180.ko.sh', indent: 2 },
+        { name: '4.14.186.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.14.186.ko.sh', indent: 2 },
+        { name: '4.14.186b.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.14.186b.ko.sh', indent: 2 },
+        { name: '4.14.186c.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.14.186c.ko.sh', indent: 2 },
+        { name: '4.19.113.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.19.113.ko.sh', indent: 2 },
+        { name: '4.19.157.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.19.157.ko.sh', indent: 2 },
+        { name: '4.19.157b.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.19.157b.ko.sh', indent: 2 },
+        { name: '4.19.157c.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.19.157c.ko.sh', indent: 2 },
+        { name: '4.19.191.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.19.191.ko.sh', indent: 2 },
+        { name: '4.19.191b.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.19.191b.ko.sh', indent: 2 },
+        { name: '4.19.191c.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.19.191c.ko.sh', indent: 2 },
+        { name: '4.19.81.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/4.19.81.ko.sh', indent: 2 },
+        { name: '5.10.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/5.10.ko.sh', indent: 2 },
+        { name: '5.15.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/5.15.ko.sh', indent: 2 },
+        { name: '5.4.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/5.4.ko.sh', indent: 2 },
+        { name: '5.4b.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/5.4b.ko.sh', indent: 2 },
+        { name: '5.4c.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/5.4c.ko.sh', indent: 2 },
+        { name: '6.1.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/6.1.ko.sh', indent: 2 },
+        { name: '6.12.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/6.12.ko.sh', indent: 2 },
+        { name: '6.6.ko.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/RTHOOK/6.6.ko.sh', indent: 2 },
+        { name: '光头强.sh', ext: 'sh', path: '王者荣耀/光头强王者解密版本公益/光头强.sh', indent: 1 },
+        { name: '光头强王者共享雷达教程(1) (1).txt', ext: 'txt', path: '王者荣耀/光头强王者共享雷达教程(1) (1).txt' },
+        { name: '光头强王者共享app.apk', ext: 'apk', path: '王者荣耀/光头强王者共享app.apk' },
+      ],
+      '无畏契约': [
+        { name: 'GTQ-无畏', ext: 'folder' },
+        { name: 'Par驱动', ext: 'folder', indent: 1 },
+        { name: '5.10-Pixel.ko.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Par驱动/5.10-Pixel.ko.sh', indent: 2 },
+        { name: '5.10.ko.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Par驱动/5.10.ko.sh', indent: 2 },
+        { name: '5.15-Pixel.ko.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Par驱动/5.15-Pixel.ko.sh', indent: 2 },
+        { name: '5.15.ko.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Par驱动/5.15.ko.sh', indent: 2 },
+        { name: '6.1.ko.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Par驱动/6.1.ko.sh', indent: 2 },
+        { name: '6.12.ko.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Par驱动/6.12.ko.sh', indent: 2 },
+        { name: '6.6.ko.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Par驱动/6.6.ko.sh', indent: 2 },
+        { name: 'RTDev', ext: 'folder', indent: 1 },
+        { name: '4.14.117.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.14.117.sh', indent: 2 },
+        { name: '4.14.180.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.14.180.sh', indent: 2 },
+        { name: '4.14.186.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.14.186.sh', indent: 2 },
+        { name: '4.14.186b.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.14.186b.sh', indent: 2 },
+        { name: '4.14.186c.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.14.186c.sh', indent: 2 },
+        { name: '4.14.186d.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.14.186d.sh', indent: 2 },
+        { name: '4.19.113.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.19.113.sh', indent: 2 },
+        { name: '4.19.157.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.19.157.sh', indent: 2 },
+        { name: '4.19.157b.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.19.157b.sh', indent: 2 },
+        { name: '4.19.157c.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.19.157c.sh', indent: 2 },
+        { name: '4.19.191.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.19.191.sh', indent: 2 },
+        { name: '4.19.191b.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.19.191b.sh', indent: 2 },
+        { name: '4.19.191c.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.19.191c.sh', indent: 2 },
+        { name: '4.19.81.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.19.81.sh', indent: 2 },
+        { name: '4.9.186.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/4.9.186.sh', indent: 2 },
+        { name: '5.10.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/5.10.sh', indent: 2 },
+        { name: '5.15.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/5.15.sh', indent: 2 },
+        { name: '5.4.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/5.4.sh', indent: 2 },
+        { name: '5.4b.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/5.4b.sh', indent: 2 },
+        { name: '5.4c.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/5.4c.sh', indent: 2 },
+        { name: '5.4d.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/5.4d.sh', indent: 2 },
+        { name: '6.1.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/6.1.sh', indent: 2 },
+        { name: '6.6.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/RTDev/6.6.sh', indent: 2 },
+        { name: 'Rthook', ext: 'folder', indent: 1 },
+        { name: '5.10.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Rthook/5.10.sh', indent: 2 },
+        { name: '5.15.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Rthook/5.15.sh', indent: 2 },
+        { name: '5.4.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Rthook/5.4.sh', indent: 2 },
+        { name: '5.4b.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Rthook/5.4b.sh', indent: 2 },
+        { name: '5.4c.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Rthook/5.4c.sh', indent: 2 },
+        { name: '6.1.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Rthook/6.1.sh', indent: 2 },
+        { name: '6.12.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Rthook/6.12.sh', indent: 2 },
+        { name: '6.6.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/Rthook/6.6.sh', indent: 2 },
+        { name: 'GTQ-无畏契约1.01.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/GTQ-无畏契约1.01.sh', indent: 1 },
+        { name: 'LinYuDriverLoader5.3.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/LinYuDriverLoader5.3.sh', indent: 1 },
+        { name: 'TwTLoaderv1.47.sh', ext: 'sh', path: '无畏契约/GTQ-无畏/TwTLoaderv1.47.sh', indent: 1 },
+      ],
+      '香肠派对': [
+        { name: '光头强香肠派对', ext: 'folder' },
+        { name: '光头强文件夹', ext: 'folder', indent: 1 },
+        { name: '光头强', ext: 'file', path: '香肠派对/光头强香肠派对/光头强文件夹/光头强', indent: 2 },
+        { name: '启动器.sh', ext: 'sh', path: '香肠派对/光头强香肠派对/光头强文件夹/启动器.sh', indent: 2 },
+        { name: '使用教程.txt', ext: 'txt', path: '香肠派对/光头强香肠派对/光头强文件夹/使用教程.txt', indent: 2 },
+      ],
+      'PUBGM': [
+        { name: '光头强PUBG1.2.sh', ext: 'sh', path: 'PUBGM/光头强PUBG1.2.sh' },
+      ],
+    };
+
+    const extIcons = {
+      sh: 'file-terminal',
+      apk: 'smartphone',
+      txt: 'file-text',
+      mp4: 'film',
+      zip: 'archive',
+      kpm: 'cpu',
+      folder: 'folder-open',
+    };
+
+    function openDownload(game) {
+      var overlay = document.getElementById('downloadOverlay');
+      var title = document.getElementById('downloadTitle');
+      var list = document.getElementById('downloadFileList');
+      var files = downloadFiles[game];
+
+      if (!files) { console.log('No files for:', game); return; }
+
+      title.textContent = game + ' - 下载资源';
+
+      // 把文件按文件夹分组
+      var html = '';
+      var groupOpen = false;
+      var fid = 0;
+
+      for (var i = 0; i < files.length; i++) {
+        var f = files[i];
+        var ml = (f.indent || 0) * 20;
+
+        if (f.ext === 'folder') {
+          // 关闭上一个分组
+          if (groupOpen) { html += '</div>'; groupOpen = false; }
+          // 文件夹标题（可点击）
+          fid++;
+          html += '<div class="dl-folder" style="margin-left:' + ml + 'px" onclick="toggleFolder(this,\'fg' + fid + '\')">';
+          html += '<i data-lucide="folder-open" style="width:16px;height:16px;"></i>';
+          html += '<span>' + f.name + '</span>';
+          html += '<i data-lucide="chevron-right" class="dl-arrow" style="width:16px;height:16px;"></i>';
+          html += '</div>';
+          html += '<div class="dl-group" id="fg' + fid + '">';
+          groupOpen = true;
+        } else {
+          var icon = extIcons[f.ext] || 'file';
+          html += '<a class="dl-file" style="margin-left:' + ml + 'px" href="downloads/' + f.path + '" download="' + f.name.replace(/"/g, '&quot;') + '">';
+          html += '<div class="dl-file-icon"><i data-lucide="' + icon + '" style="width:16px;height:16px;"></i></div>';
+          html += '<div><div class="dl-file-name">' + f.name + '</div><div class="dl-file-ext">.' + f.ext + '</div></div></a>';
+        }
+      }
+      if (groupOpen) html += '</div>';
+
+      list.innerHTML = html;
+      overlay.classList.add('show');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+
+      // 默认关闭所有文件夹
+      setTimeout(function() {
+        var folders = list.querySelectorAll('.dl-folder');
+        var groups = list.querySelectorAll('.dl-group');
+        for (var g = 0; g < folders.length; g++) {
+          folders[g].classList.remove('open');
+        }
+        for (var g = 0; g < groups.length; g++) {
+          groups[g].style.maxHeight = '0';
+          groups[g].classList.add('collapsed');
+        }
+      }, 50);
+    }
+
+    function toggleFolder(el, gid) {
+      var group = document.getElementById(gid);
+      if (!group) return;
+      el.classList.toggle('open');
+      if (group.classList.contains('collapsed')) {
+        group.classList.remove('collapsed');
+        group.style.maxHeight = group.scrollHeight + 'px';
+      } else {
+        group.style.maxHeight = group.scrollHeight + 'px';
+        // 强制回流后设置为0
+        group.offsetHeight;
+        group.style.maxHeight = '0';
+        group.classList.add('collapsed');
+      }
+    }
+
+    function closeDownload() {
+      document.getElementById('downloadOverlay').classList.remove('show');
+    }
+
+    document.getElementById('downloadOverlay').addEventListener('click', function(e) {
+      if (e.target === this) closeDownload();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeDownload();
+    });
+
+    // 导航栏滚动
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 60) {
+        nav.style.boxShadow = '0 6px 16px rgb(163,177,198,0.5)';
+      } else {
+        nav.style.boxShadow = '0 4px 12px rgb(163,177,198,0.4)';
+      }
+    }, { passive: true });
+
+    // ===== 音乐播放器 =====
+    (function() {
+      const audio = new Audio();
+      let songs = [];
+      let currentIndex = 0;
+      let isPlaying = false;
+      let userInteracted = false;
+      let mode = 0;
+      const modeIcons = ['🔁', '🔀', '🔂'];
+      const modeNames = ['顺序播放', '随机播放', '单曲循环'];
+      let seeking = false;
+
+      const $ = id => document.getElementById(id);
+      const player = $('musicPlayer');
+      const toggle = $('musicToggle');
+      const panel = $('musicPanel');
+      const disc = $('disc');
+      const btnPlay = $('btnPlay');
+      const btnPrev = $('btnPrev');
+      const btnNext = $('btnNext');
+      const btnMode = $('btnMode');
+      const btnList = $('btnList');
+      const progressBar = $('progressBar');
+      const progressFill = $('progressFill');
+      const currentTimeEl = $('currentTime');
+      const totalTimeEl = $('totalTime');
+      const songTitle = $('songTitle');
+      const songArtist = $('songArtist');
+      const volumeSlider = $('volumeSlider');
+      const playlistBox = $('playlistBox');
+
+      songs = [
+        { file: 'music/水手 - 郑智化.mp3', title: '水手', artist: '郑智化' },
+        { file: 'music/一直很安静 - 阿桑.mp3', title: '一直很安静', artist: '阿桑' },
+        { file: 'music/Wasted - strangerboi24.mp3', title: 'Wasted', artist: 'strangerboi24' },
+        { file: 'music/music2.mp3', title: '音乐 2', artist: '光头强内核' },
+        { file: 'music/music3.mp3', title: '音乐 3', artist: '光头强内核' },
+        { file: 'music/music4.mp3', title: '音乐 4', artist: '光头强内核' },
+      ];
+
+      function fmt(sec) {
+        if (isNaN(sec) || !isFinite(sec)) return '0:00';
+        const m = Math.floor(sec / 60);
+        const s = Math.floor(sec % 60);
+        return m + ':' + (s < 10 ? '0' : '') + s;
+      }
+
+      function updateUI() {
+        btnPlay.textContent = isPlaying ? '⏸' : '▶';
+        isPlaying ? disc.classList.add('spinning') : disc.classList.remove('spinning');
+      }
+
+      function doPlay() {
+        return audio.play().then(() => {
+          isPlaying = true;
+          audio.muted = false;
+          updateUI();
+          disc.classList.remove('need-click');
+          return true;
+        }).catch(() => { return false; });
+      }
+
+      async function loadSong(index, autoPlay) {
+        if (index < 0 || index >= songs.length) return;
+        currentIndex = index;
+        const song = songs[index];
+        audio.src = song.file;
+        songTitle.textContent = song.title || song.file;
+        songArtist.textContent = song.artist || '未知艺术家';
+        progressFill.style.width = '0%';
+        currentTimeEl.textContent = '0:00';
+        totalTimeEl.textContent = '0:00';
+        renderPlaylist();
+
+        if (!autoPlay) return;
+
+        if (userInteracted) {
+          doPlay();
+        } else {
+          audio.muted = true;
+          const ok = await doPlay();
+          if (!ok) {
+            songTitle.textContent = '触摸页面即可播放';
+            disc.classList.add('need-click');
+          }
+        }
+      }
+
+      function play() {
+        if (songs.length === 0) return;
+        if (!audio.src) { loadSong(currentIndex, true); return; }
+        doPlay().then(ok => {
+          if (!ok) { songTitle.textContent = '触摸页面即可播放'; disc.classList.add('need-click'); }
+        });
+      }
+
+      function pause() { audio.pause(); isPlaying = false; updateUI(); }
+
+      function next() {
+        if (songs.length === 0) return;
+        let idx;
+        if (mode === 1) {
+          idx = Math.floor(Math.random() * songs.length);
+          if (songs.length > 1) { while (idx === currentIndex) idx = Math.floor(Math.random() * songs.length); }
+        } else { idx = (currentIndex + 1) % songs.length; }
+        loadSong(idx, true);
+      }
+
+      function prev() {
+        if (songs.length === 0) return;
+        if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+        let idx = (currentIndex - 1 + songs.length) % songs.length;
+        loadSong(idx, true);
+      }
+
+      function renderPlaylist() {
+        playlistBox.innerHTML = songs.map((s, i) =>
+          `<div class="music-playlist-item${i === currentIndex ? ' active' : ''}" data-index="${i}">${s.title || s.file}</div>`
+        ).join('');
+        playlistBox.querySelectorAll('.music-playlist-item').forEach(el => {
+          el.addEventListener('click', (e) => { e.stopPropagation(); loadSong(parseInt(el.dataset.index), true); });
+        });
+      }
+
+      function onFirstInteract() {
+        if (userInteracted) return;
+        userInteracted = true;
+        if (!isPlaying && songs.length > 0) { audio.muted = false; doPlay(); }
+        ['click','touchstart','keydown'].forEach(e => document.removeEventListener(e, onFirstInteract));
+      }
+      ['click','touchstart','keydown'].forEach(e => document.addEventListener(e, onFirstInteract, { once: true }));
+
+      toggle.addEventListener('click', (e) => { e.stopPropagation(); panel.classList.toggle('open'); });
+      panel.addEventListener('click', (e) => e.stopPropagation());
+      document.addEventListener('click', (e) => { if (!player.contains(e.target)) panel.classList.remove('open'); });
+
+      btnPlay.addEventListener('click', (e) => { e.stopPropagation(); if (songs.length === 0) return; isPlaying ? pause() : play(); });
+      btnPrev.addEventListener('click', (e) => { e.stopPropagation(); prev(); });
+      btnNext.addEventListener('click', (e) => { e.stopPropagation(); next(); });
+      btnMode.addEventListener('click', (e) => { e.stopPropagation(); mode = (mode + 1) % 3; btnMode.textContent = modeIcons[mode]; btnMode.title = modeNames[mode]; });
+      btnList.addEventListener('click', (e) => { e.stopPropagation(); playlistBox.classList.toggle('open'); });
+
+      audio.addEventListener('timeupdate', () => {
+        if (!audio.duration || seeking) return;
+        progressFill.style.width = (audio.currentTime / audio.duration * 100) + '%';
+        currentTimeEl.textContent = fmt(audio.currentTime);
+        totalTimeEl.textContent = fmt(audio.duration);
+      });
+
+      progressBar.addEventListener('click', (e) => {
+        if (!audio.duration) return;
+        e.stopPropagation();
+        const r = Math.max(0, Math.min(1, (e.clientX - progressBar.getBoundingClientRect().left) / progressBar.getBoundingClientRect().width));
+        audio.currentTime = r * audio.duration;
+      });
+
+      progressBar.addEventListener('mousedown', (e) => {
+        if (!audio.duration) return;
+        e.stopPropagation();
+        seeking = true;
+        const rect = progressBar.getBoundingClientRect();
+        function onMove(ev) {
+          const r = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+          progressFill.style.width = (r * 100) + '%';
+          currentTimeEl.textContent = fmt(r * audio.duration);
+        }
+        function onUp(ev) {
+          seeking = false;
+          const r = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+          audio.currentTime = r * audio.duration;
+          document.removeEventListener('mousemove', onMove);
+          document.removeEventListener('mouseup', onUp);
+        }
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      });
+
+      audio.addEventListener('ended', () => { if (mode === 2) { audio.currentTime = 0; play(); } else next(); });
+      audio.addEventListener('error', () => {
+        console.log('播放错误，跳过:', songs[currentIndex]?.file);
+        if (songs.length > 1) next();
+        else { isPlaying = false; updateUI(); songTitle.textContent = '播放错误'; }
+      });
+
+      audio.volume = 0.8;
+      volumeSlider.addEventListener('click', (e) => e.stopPropagation());
+      volumeSlider.addEventListener('input', (e) => { e.stopPropagation(); audio.volume = volumeSlider.value / 100; });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.code === 'Space' && songs.length > 0) { e.preventDefault(); isPlaying ? pause() : play(); }
+      });
+
+      audio.muted = true;
+      audio.volume = 0.8;
+      if (songs.length > 0) { renderPlaylist(); loadSong(0, true); }
+    })();
+  </script>
+
+</body>
+</html>

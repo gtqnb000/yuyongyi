@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+
+# 大文件排除（超过25MB，Cloudflare限制）
+*.mp4
+*.avi
+*.mkv
+*.mov
