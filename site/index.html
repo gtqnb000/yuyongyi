@@ -821,13 +821,12 @@
       justify-content: center;
     }
     .download-modal-close:active { box-shadow: var(--shadow-inset-sm); }
-    .dl-folder {
+    details.dl-folder { margin-top: 8px; margin-bottom: 4px; }
+    details.dl-folder summary {
       display: flex;
       align-items: center;
       gap: 8px;
       padding: 10px 14px;
-      margin-top: 12px;
-      margin-bottom: 6px;
       border-radius: 14px;
       background: #E0E5EC;
       box-shadow: var(--shadow-inset-sm);
@@ -836,21 +835,19 @@
       color: #3D4852;
       cursor: pointer;
       user-select: none;
-      transition: all 0.2s ease-out;
+      list-style: none;
     }
-    .dl-folder:active { box-shadow: var(--shadow-extruded-sm); }
-    .dl-folder i { color: #6C63FF; }
-    .dl-folder .dl-arrow {
+    details.dl-folder summary::-webkit-details-marker { display: none; }
+    details.dl-folder summary::marker { display: none; content: ''; }
+    details.dl-folder summary:active { box-shadow: var(--shadow-extruded-sm); }
+    details.dl-folder summary i { color: #6C63FF; }
+    details.dl-folder summary .dl-arrow {
       margin-left: auto;
       transition: transform 0.25s ease-out;
       color: #6B7280;
     }
-    .dl-folder.open .dl-arrow { transform: rotate(90deg); }
-    .dl-group { overflow: visible; }
-    .dl-group.collapsed:not(.leaf) > * { display: none; }
-    .dl-group.collapsed:not(.leaf) > .dl-folder { display: flex; }
-    .dl-group.leaf { overflow: hidden; transition: max-height 0.3s ease-out; }
-    .dl-group.leaf.collapsed { max-height: 0 !important; }
+    details.dl-folder[open] summary .dl-arrow { transform: rotate(90deg); }
+    details.dl-folder .dl-contents { padding-left: 8px; }
     .dl-file {
       display: flex;
       align-items: center;
@@ -1589,81 +1586,42 @@
 
       title.textContent = game + ' - 下载资源';
 
-      // 用栈管理嵌套文件夹
+      // 用栈构建嵌套的 details 结构
       var html = '';
-      var stack = []; // 存放打开的 group id
-      var fid = 0;
+      var stack = []; // 存放当前打开的 details 层级
 
       for (var i = 0; i < files.length; i++) {
         var f = files[i];
         var indent = f.indent || 0;
 
         if (f.ext === 'folder') {
-          // 关闭比当前层级深或同级的已打开分组
+          // 关闭比当前层级深的 details
           while (stack.length > indent) {
-            html += '</div>';
+            html += '</div></details>';
             stack.pop();
           }
-          fid++;
-          var gid = 'fg' + fid;
-          var ml = indent * 20;
-          html += '<div class="dl-folder" style="margin-left:' + ml + 'px" onclick="toggleFolder(this,\'' + gid + '\')">';
+          html += '<details class="dl-folder">';
+          html += '<summary>';
           html += '<i data-lucide="folder-open" style="width:16px;height:16px;"></i>';
           html += '<span>' + f.name + '</span>';
           html += '<i data-lucide="chevron-right" class="dl-arrow" style="width:16px;height:16px;"></i>';
-          html += '</div>';
-          html += '<div class="dl-group" id="' + gid + '">';
-          stack.push(gid);
+          html += '</summary>';
+          html += '<div class="dl-contents">';
+          stack.push(f.name);
         } else {
-          var ml = indent * 20;
+          var ml = Math.max(0, (indent - stack.length)) * 20;
           var icon = extIcons[f.ext] || 'file';
-          html += '<a class="dl-file" style="margin-left:' + ml + 'px" href="downloads/' + f.path + '" download="' + f.name.replace(/"/g, '&quot;') + '">';
+          html += '<a class="dl-file" href="downloads/' + f.path + '" download="' + f.name.replace(/"/g, '&quot;') + '">';
           html += '<div class="dl-file-icon"><i data-lucide="' + icon + '" style="width:16px;height:16px;"></i></div>';
           html += '<div><div class="dl-file-name">' + f.name + '</div><div class="dl-file-ext">.' + f.ext + '</div></div></a>';
         }
       }
-      // 关闭所有剩余分组
-      while (stack.length > 0) { html += '</div>'; stack.pop(); }
+      // 关闭所有剩余 details
+      while (stack.length > 0) { html += '</div></details>'; stack.pop(); }
 
       list.innerHTML = html;
       overlay.classList.add('show');
       if (typeof lucide !== 'undefined') lucide.createIcons();
-
-      // 默认关闭所有文件夹
-      setTimeout(function() {
-        var folders = list.querySelectorAll('.dl-folder');
-        var groups = list.querySelectorAll('.dl-group');
-        for (var g = 0; g < folders.length; g++) {
-          folders[g].classList.remove('open');
-        }
-        for (var g = 0; g < groups.length; g++) {
-          groups[g].classList.add('collapsed');
-          if (!groups[g].querySelector('.dl-group')) {
-            groups[g].classList.add('leaf');
-            groups[g].style.maxHeight = '0';
-          }
-        }
-      }, 50);
-    }
-
-    function toggleFolder(el, gid) {
-      var group = document.getElementById(gid);
-      if (!group) return;
-      el.classList.toggle('open');
-      var isLeaf = group.classList.contains('leaf');
-      if (isLeaf) {
-        if (group.classList.contains('collapsed')) {
-          group.classList.remove('collapsed');
-          group.style.maxHeight = group.scrollHeight + 'px';
-        } else {
-          group.style.maxHeight = group.scrollHeight + 'px';
-          group.offsetHeight;
-          group.style.maxHeight = '0';
-          group.classList.add('collapsed');
-        }
-      } else {
-        group.classList.toggle('collapsed');
-      }
     }
 
     function closeDownload() {
