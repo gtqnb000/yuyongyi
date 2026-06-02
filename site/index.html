@@ -1637,35 +1637,41 @@
 
       title.textContent = game + ' - 下载资源';
 
-      // 把文件按文件夹分组
+      // 用栈管理嵌套文件夹
       var html = '';
-      var groupOpen = false;
+      var stack = []; // 存放打开的 group id
       var fid = 0;
 
       for (var i = 0; i < files.length; i++) {
         var f = files[i];
-        var ml = (f.indent || 0) * 20;
+        var indent = f.indent || 0;
 
         if (f.ext === 'folder') {
-          // 关闭上一个分组
-          if (groupOpen) { html += '</div>'; groupOpen = false; }
-          // 文件夹标题（可点击）
+          // 关闭比当前层级深或同级的已打开分组
+          while (stack.length > indent) {
+            html += '</div>';
+            stack.pop();
+          }
           fid++;
-          html += '<div class="dl-folder" style="margin-left:' + ml + 'px" onclick="toggleFolder(this,\'fg' + fid + '\')">';
+          var gid = 'fg' + fid;
+          var ml = indent * 20;
+          html += '<div class="dl-folder" style="margin-left:' + ml + 'px" onclick="toggleFolder(this,\'' + gid + '\')">';
           html += '<i data-lucide="folder-open" style="width:16px;height:16px;"></i>';
           html += '<span>' + f.name + '</span>';
           html += '<i data-lucide="chevron-right" class="dl-arrow" style="width:16px;height:16px;"></i>';
           html += '</div>';
-          html += '<div class="dl-group" id="fg' + fid + '">';
-          groupOpen = true;
+          html += '<div class="dl-group" id="' + gid + '">';
+          stack.push(gid);
         } else {
+          var ml = indent * 20;
           var icon = extIcons[f.ext] || 'file';
           html += '<a class="dl-file" style="margin-left:' + ml + 'px" href="downloads/' + f.path + '" download="' + f.name.replace(/"/g, '&quot;') + '">';
           html += '<div class="dl-file-icon"><i data-lucide="' + icon + '" style="width:16px;height:16px;"></i></div>';
           html += '<div><div class="dl-file-name">' + f.name + '</div><div class="dl-file-ext">.' + f.ext + '</div></div></a>';
         }
       }
-      if (groupOpen) html += '</div>';
+      // 关闭所有剩余分组
+      while (stack.length > 0) { html += '</div>'; stack.pop(); }
 
       list.innerHTML = html;
       overlay.classList.add('show');
